@@ -8,9 +8,22 @@ import (
 )
 
 var (
-	token  string
-	server string
+	token   string
+	server  string
+	version string
 )
+
+func SetVersion(v string) {
+	version = v
+}
+
+var versionCmd = &cobra.Command{
+	Use:   "version",
+	Short: "Print version",
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println("conchtalk-dlc", version)
+	},
+}
 
 var rootCmd = &cobra.Command{
 	Use:   "conchtalk-dlc",
@@ -26,6 +39,7 @@ var rootCmd = &cobra.Command{
 func init() {
 	rootCmd.Flags().StringVar(&token, "token", "", "Relay authentication token (required)")
 	rootCmd.Flags().StringVar(&server, "server", "wss://api.conch-talk.com/relay", "Relay server WebSocket URL")
+	rootCmd.AddCommand(versionCmd)
 }
 
 func Execute() error {
