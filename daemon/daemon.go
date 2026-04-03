@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/cheung/conchtalk-dlc/relay"
 	"github.com/cheung/conchtalk-dlc/skills"
@@ -17,6 +18,7 @@ type Daemon struct {
 	client   *relay.Client
 	registry *tools.Registry
 	skills   []relay.SkillDefinition
+	sem      chan struct{}
 }
 
 // HandleMessage implements relay.MessageHandler.
@@ -35,6 +37,7 @@ func Run(token, server string) error {
 	d := &Daemon{
 		registry: tools.NewRegistry(),
 		skills:   skills.Load(),
+		sem:      make(chan struct{}, 16),
 	}
 
 	d.client = relay.NewClient(server, token, d)
@@ -61,59 +64,88 @@ func Run(token, server string) error {
 }
 
 func (d *Daemon) executeTool(msg relay.IncomingMessage) {
+	// Acquire semaphore slot
+	select {
+	case d.sem <- struct{}{}:
+		defer func() { <-d.sem }()
+	default:
+		if err := d.client.Send(relay.OutgoingMessage{
+			Type:  "tool_error",
+			ID:    msg.ID,
+			Error: "too many concurrent calls",
+		}); err != nil {
+			log.Printf("[daemon] send failed: %v", err)
+		}
+		return
+	}
+
 	tool, err := d.registry.Get(msg.Tool)
 	if err != nil {
-		d.client.Send(relay.OutgoingMessage{
+		if err := d.client.Send(relay.OutgoingMessage{
 			Type:  "tool_error",
 			ID:    msg.ID,
 			Error: err.Error(),
-		})
+		}); err != nil {
+			log.Printf("[daemon] send failed: %v", err)
+		}
 		return
 	}
 
 	var args map[string]interface{}
 	if err := json.Unmarshal(msg.Arguments, &args); err != nil {
-		d.client.Send(relay.OutgoingMessage{
+		if err := d.client.Send(relay.OutgoingMessage{
 			Type:  "tool_error",
 			ID:    msg.ID,
 			Error: "invalid arguments: " + err.Error(),
-		})
+		}); err != nil {
+			log.Printf("[daemon] send failed: %v", err)
+		}
 		return
 	}
 
 	streamCb := func(stream string, data string) {
-		d.client.Send(relay.OutgoingMessage{
+		if err := d.client.Send(relay.OutgoingMessage{
 			Type:   "tool_output",
 			ID:     msg.ID,
 			Stream: stream,
 			Data:   data,
-		})
+		}); err != nil {
+			log.Printf("[daemon] send failed: %v", err)
+		}
 	}
 
-	result := tool.Execute(context.Background(), args, streamCb)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+	result := tool.Execute(ctx, args, streamCb)
 
 	if result.Error != "" {
-		d.client.Send(relay.OutgoingMessage{
+		if err := d.client.Send(relay.OutgoingMessage{
 			Type:  "tool_error",
 			ID:    msg.ID,
 			Error: result.Error,
-		})
+		}); err != nil {
+			log.Printf("[daemon] send failed: %v", err)
+		}
 		return
 	}
 
 	exitCode := result.ExitCode
-	d.client.Send(relay.OutgoingMessage{
+	if err := d.client.Send(relay.OutgoingMessage{
 		Type:     "tool_done",
 		ID:       msg.ID,
 		ExitCode: &exitCode,
 		Output:   result.Output,
-	})
+	}); err != nil {
+		log.Printf("[daemon] send failed: %v", err)
+	}
 }
 
 func (d *Daemon) SendCapabilities() {
-	d.client.Send(relay.OutgoingMessage{
+	if err := d.client.Send(relay.OutgoingMessage{
 		Type:   "capabilities",
 		Tools:  d.registry.Definitions(),
 		Skills: d.skills,
-	})
+	}); err != nil {
+		log.Printf("[daemon] send failed: %v", err)
+	}
 }

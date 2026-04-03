@@ -71,6 +71,13 @@ func (t *ExecuteCommandTool) Execute(ctx context.Context, args map[string]interf
 			mu.Unlock()
 			stream(name, line)
 		}
+		if err := scanner.Err(); err != nil {
+			errLine := fmt.Sprintf("[%s read error: %v]\n", name, err)
+			mu.Lock()
+			allOutput.WriteString(errLine)
+			mu.Unlock()
+			stream(name, errLine)
+		}
 	}
 
 	wg.Add(2)

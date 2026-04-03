@@ -106,9 +106,9 @@ fi
 
 # --- Determine download URL ---
 if [ "$DLC_VERSION" = "latest" ]; then
-  DOWNLOAD_URL="https://github.com/${REPO}/releases/latest/download/${SERVICE_NAME}_${OS}_${ARCH}"
+  DOWNLOAD_URL="https://github.com/${REPO}/releases/latest/download/${SERVICE_NAME}-${OS}-${ARCH}"
 else
-  DOWNLOAD_URL="https://github.com/${REPO}/releases/download/${DLC_VERSION}/${SERVICE_NAME}_${OS}_${ARCH}"
+  DOWNLOAD_URL="https://github.com/${REPO}/releases/download/${DLC_VERSION}/${SERVICE_NAME}-${OS}-${ARCH}"
 fi
 
 # --- Create directories ---
@@ -138,6 +138,14 @@ log_success "Token saved to ~/.conchtalk/token"
 # --- Install service ---
 if [ "$OS" = "linux" ]; then
   log_info "Installing systemd service..."
+
+  # Write token to environment file (not in unit file)
+  cat > /etc/conchtalk-dlc.env <<ENVEOF
+DLC_TOKEN=${DLC_TOKEN}
+ENVEOF
+  chmod 600 /etc/conchtalk-dlc.env
+  log_success "Token written to /etc/conchtalk-dlc.env"
+
   cat > /etc/systemd/system/${SERVICE_NAME}.service <<EOF
 [Unit]
 Description=ConchTalk DLC Daemon
@@ -145,7 +153,8 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=${TARGET_DIR}/conchtalk-dlc --token ${DLC_TOKEN} --server ${DLC_SERVER}
+EnvironmentFile=/etc/conchtalk-dlc.env
+ExecStart=${TARGET_DIR}/conchtalk-dlc --token \${DLC_TOKEN} --server ${DLC_SERVER}
 Restart=always
 RestartSec=5
 User=root

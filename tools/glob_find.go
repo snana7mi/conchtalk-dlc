@@ -33,9 +33,9 @@ func (t *GlobFindTool) Execute(ctx context.Context, args map[string]interface{},
 	cleanPattern := strings.TrimPrefix(pattern, "**/")
 	var cmd string
 	if strings.Contains(cleanPattern, "/") {
-		cmd = fmt.Sprintf("find %s -path %q -type f 2>/dev/null | head -200", path, "*"+cleanPattern)
+		cmd = fmt.Sprintf("find %q -path %q -type f 2>/dev/null | head -200", path, "*"+cleanPattern)
 	} else {
-		cmd = fmt.Sprintf("find %s -name %q -type f 2>/dev/null | head -200", path, cleanPattern)
+		cmd = fmt.Sprintf("find %q -name %q -type f 2>/dev/null | head -200", path, cleanPattern)
 	}
 	exec := &ExecuteCommandTool{}
 	return exec.Execute(ctx, map[string]interface{}{"command": cmd}, stream)

@@ -1,6 +1,6 @@
 module github.com/cheung/conchtalk-dlc
 
-go 1.25.0
+go 1.23
 
 require (
 	github.com/gorilla/websocket v1.5.3

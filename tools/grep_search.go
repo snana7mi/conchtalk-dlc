@@ -28,7 +28,7 @@ func (t *GrepSearchTool) Execute(ctx context.Context, args map[string]interface{
 	if path == "" {
 		path = "."
 	}
-	cmd := fmt.Sprintf("rg -n %q %s 2>/dev/null || grep -rn %q %s", pattern, path, pattern, path)
+	cmd := fmt.Sprintf("rg -n %q %q 2>/dev/null || grep -rn %q %q", pattern, path, pattern, path)
 	exec := &ExecuteCommandTool{}
 	return exec.Execute(ctx, map[string]interface{}{"command": cmd}, stream)
 }
