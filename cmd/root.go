@@ -1,6 +1,9 @@
 package cmd
 
 import (
+	"fmt"
+
+	"github.com/cheung/conchtalk-dlc/daemon"
 	"github.com/spf13/cobra"
 )
 
@@ -14,10 +17,9 @@ var rootCmd = &cobra.Command{
 	Short: "ConchTalk DLC — remote tool executor for ConchTalk relay mode",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if token == "" {
-			return cmd.Help()
+			return fmt.Errorf("--token is required")
 		}
-		// Will be implemented in Task 3
-		return nil
+		return daemon.Run(token, server)
 	},
 }
 
