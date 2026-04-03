@@ -1,4 +1,4 @@
-module github.com/cheung/conchtalk-dlc
+module github.com/snana7mi/conchtalk-dlc
 
 go 1.23
 

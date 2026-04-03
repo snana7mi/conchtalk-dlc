@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/cheung/conchtalk-dlc/cmd"
+	"github.com/snana7mi/conchtalk-dlc/cmd"
 )
 
 // Set via -ldflags at build time

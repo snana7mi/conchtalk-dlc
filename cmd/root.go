@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/cheung/conchtalk-dlc/daemon"
+	"github.com/snana7mi/conchtalk-dlc/daemon"
 	"github.com/spf13/cobra"
 )
 

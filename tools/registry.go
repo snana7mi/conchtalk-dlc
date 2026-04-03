@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/cheung/conchtalk-dlc/relay"
+	"github.com/snana7mi/conchtalk-dlc/relay"
 )
 
 type ToolResult struct {

@@ -42,7 +42,7 @@ if [ "$OS" = "linux" ] && [ "$EUID" -ne 0 ]; then
 fi
 
 # --- Defaults ---
-REPO="cheung/conchtalk-dlc"
+REPO="snana7mi/conchtalk-dlc"
 SERVICE_NAME="conchtalk-dlc"
 DLC_TOKEN=""
 DLC_SERVER="wss://api.conch-talk.com/relay"

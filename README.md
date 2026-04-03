@@ -22,7 +22,7 @@ Generate your token in the ConchTalk iOS app under Server Settings → Relay Mod
 ```bash
 # Download the binary for your platform
 # Linux amd64:
-curl -Lo conchtalk-dlc https://github.com/cheung/conchtalk-dlc/releases/latest/download/conchtalk-dlc-linux-amd64
+curl -Lo conchtalk-dlc https://github.com/snana7mi/conchtalk-dlc/releases/latest/download/conchtalk-dlc-linux-amd64
 chmod +x conchtalk-dlc
 
 # Run

@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/cheung/conchtalk-dlc/relay"
+	"github.com/snana7mi/conchtalk-dlc/relay"
 )
 
 const SkillsDir = ".conchtalk/skills"

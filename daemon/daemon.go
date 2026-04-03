@@ -9,9 +9,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/cheung/conchtalk-dlc/relay"
-	"github.com/cheung/conchtalk-dlc/skills"
-	"github.com/cheung/conchtalk-dlc/tools"
+	"github.com/snana7mi/conchtalk-dlc/relay"
+	"github.com/snana7mi/conchtalk-dlc/skills"
+	"github.com/snana7mi/conchtalk-dlc/tools"
 )
 
 type Daemon struct {
