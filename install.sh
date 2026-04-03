@@ -57,25 +57,25 @@ fi
 # --- Parse arguments ---
 while [ $# -gt 0 ]; do
   case "$1" in
-    --token)
+    -t|--token)
       DLC_TOKEN="$2"
       shift 2
       ;;
-    --server)
+    -s|--server)
       DLC_SERVER="$2"
       shift 2
       ;;
-    --install-dir)
+    -d|--install-dir)
       INSTALL_DIR="$2"
       shift 2
       ;;
-    --version)
+    -v|--version)
       DLC_VERSION="$2"
       shift 2
       ;;
     *)
       log_error "Unknown argument: $1"
-      echo "Usage: $0 --token <TOKEN> [--server <URL>] [--install-dir <DIR>] [--version <VER>]"
+      echo "Usage: $0 -t <TOKEN> [-s <URL>] [-d <DIR>] [-v <VER>]"
       exit 1
       ;;
   esac
@@ -83,7 +83,7 @@ done
 
 if [ -z "$DLC_TOKEN" ]; then
   log_error "--token is required"
-  echo "Usage: $0 --token <TOKEN> [--server <URL>] [--install-dir <DIR>] [--version <VER>]"
+  echo "Usage: $0 -t <TOKEN> [-s <URL>] [-d <DIR>] [-v <VER>]"
   exit 1
 fi
 
