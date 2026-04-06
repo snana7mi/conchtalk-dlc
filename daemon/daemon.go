@@ -9,16 +9,18 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/snana7mi/conchtalk-dlc/acp"
 	"github.com/snana7mi/conchtalk-dlc/relay"
 	"github.com/snana7mi/conchtalk-dlc/skills"
 	"github.com/snana7mi/conchtalk-dlc/tools"
 )
 
 type Daemon struct {
-	client   *relay.Client
-	registry *tools.Registry
-	skills   []relay.SkillDefinition
-	sem      chan struct{}
+	client     *relay.Client
+	registry   *tools.Registry
+	skills     []relay.SkillDefinition
+	sem        chan struct{}
+	acpManager *acp.Manager
 }
 
 // HandleMessage implements relay.MessageHandler.
@@ -28,6 +30,12 @@ func (d *Daemon) HandleMessage(msg relay.IncomingMessage) {
 		go d.executeTool(msg)
 	case "status":
 		log.Printf("[daemon] client status: %s", msg.Client)
+	case "acp_start":
+		go d.handleACPStart(msg)
+	case "acp_data":
+		go d.handleACPData(msg)
+	case "acp_close":
+		d.acpManager.Close(msg.SessionID)
 	default:
 		log.Printf("[daemon] unknown message type: %s", msg.Type)
 	}
@@ -35,10 +43,12 @@ func (d *Daemon) HandleMessage(msg relay.IncomingMessage) {
 
 func Run(token, server string) error {
 	d := &Daemon{
-		registry: tools.NewRegistry(),
-		skills:   skills.Load(),
-		sem:      make(chan struct{}, 16),
+		registry:   tools.NewRegistry(),
+		skills:     skills.Load(),
+		sem:        make(chan struct{}, 16),
+		acpManager: acp.NewManager(),
 	}
+	defer d.acpManager.CloseAll()
 
 	d.client = relay.NewClient(server, token, d)
 	d.client.OnConnect = d.SendCapabilities
@@ -141,11 +151,41 @@ func (d *Daemon) executeTool(msg relay.IncomingMessage) {
 }
 
 func (d *Daemon) SendCapabilities() {
+	agents := acp.DetectAgents()
 	if err := d.client.Send(relay.OutgoingMessage{
 		Type:   "capabilities",
 		Tools:  d.registry.Definitions(),
 		Skills: d.skills,
+		Agents: agents,
 	}); err != nil {
 		log.Printf("[daemon] send failed: %v", err)
+	}
+}
+
+func (d *Daemon) handleACPStart(msg relay.IncomingMessage) {
+	err := d.acpManager.Start(msg.SessionID, msg.Command, msg.Cwd, func(out relay.OutgoingMessage) error {
+		return d.client.Send(out)
+	})
+	if err != nil {
+		_ = d.client.Send(relay.OutgoingMessage{
+			Type:      "acp_error",
+			SessionID: msg.SessionID,
+			Error:     err.Error(),
+		})
+		return
+	}
+	_ = d.client.Send(relay.OutgoingMessage{
+		Type:      "acp_started",
+		SessionID: msg.SessionID,
+	})
+}
+
+func (d *Daemon) handleACPData(msg relay.IncomingMessage) {
+	if err := d.acpManager.Send(msg.SessionID, msg.Data); err != nil {
+		_ = d.client.Send(relay.OutgoingMessage{
+			Type:      "acp_error",
+			SessionID: msg.SessionID,
+			Error:     err.Error(),
+		})
 	}
 }
