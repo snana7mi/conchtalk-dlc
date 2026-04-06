@@ -32,7 +32,7 @@ var rootCmd = &cobra.Command{
 		if token == "" {
 			return fmt.Errorf("--token is required")
 		}
-		return daemon.Run(token, server)
+		return daemon.Run(token, server, version)
 	},
 }
 

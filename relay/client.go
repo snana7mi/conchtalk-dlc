@@ -196,11 +196,13 @@ func (c *Client) connectAndServe() error {
 	}
 }
 
-// heartbeat sends WebSocket ping frames every 25 seconds until the
-// heartbeatDone channel is closed.
+// heartbeat sends a WebSocket ping frame and an application-level JSON ping
+// every 30 seconds until the heartbeatDone channel is closed.
 func (c *Client) heartbeat(done chan struct{}) {
-	ticker := time.NewTicker(25 * time.Second)
+	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
+
+	ping := []byte(`{"type":"ping"}`)
 
 	for {
 		select {
@@ -211,9 +213,12 @@ func (c *Client) heartbeat(done chan struct{}) {
 		case <-ticker.C:
 			c.connMu.Lock()
 			if c.conn != nil {
+				// Protocol-level ping for keepalive
 				if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
 					log.Printf("[relay] heartbeat error: %v", err)
 				}
+				// Application-level ping so the DO can update last_seen
+				_ = c.conn.WriteMessage(websocket.TextMessage, ping)
 			}
 			c.connMu.Unlock()
 		}

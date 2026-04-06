@@ -13,6 +13,7 @@ import (
 	"github.com/snana7mi/conchtalk-dlc/relay"
 	"github.com/snana7mi/conchtalk-dlc/skills"
 	"github.com/snana7mi/conchtalk-dlc/tools"
+	"github.com/snana7mi/conchtalk-dlc/updater"
 )
 
 type Daemon struct {
@@ -41,7 +42,7 @@ func (d *Daemon) HandleMessage(msg relay.IncomingMessage) {
 	}
 }
 
-func Run(token, server string) error {
+func Run(token, server, version string) error {
 	d := &Daemon{
 		registry:   tools.NewRegistry(),
 		skills:     skills.Load(),
@@ -68,6 +69,9 @@ func Run(token, server string) error {
 	}()
 
 	go d.client.Run()
+
+	// Start auto-updater (checks daily at UTC midnight)
+	updater.StartSchedule(version, ctx.Done())
 
 	<-ctx.Done()
 	return nil
