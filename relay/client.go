@@ -167,6 +167,13 @@ func (c *Client) connectAndServe() error {
 		c.OnConnect()
 	}
 
+	// 收到 pong 时刷新 read deadline，确保连接存活检测。
+	conn.SetPongHandler(func(string) error {
+		return conn.SetReadDeadline(time.Now().Add(90 * time.Second))
+	})
+	// 初始 read deadline（等待第一个 pong）。
+	_ = conn.SetReadDeadline(time.Now().Add(90 * time.Second))
+
 	// Start heartbeat in a separate goroutine.
 	heartbeatDone := make(chan struct{})
 	go c.heartbeat(heartbeatDone)

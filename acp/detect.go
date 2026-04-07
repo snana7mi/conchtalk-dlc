@@ -14,12 +14,12 @@ var knownAgents = []struct {
 	Binary  string
 	AcpFlag string
 }{
-	{"claude", "Claude Code", "claude", "--acp"},
+	{"claude", "Claude Code", "claude", ""},
 	{"codex", "Codex", "codex", ""},
 	{"gemini", "Gemini CLI", "gemini", "--acp"},
-	{"kimi", "Kimi CLI", "kimi", "--acp"},
-	{"opencode", "OpenCode", "opencode", "--acp"},
-	{"openclaw", "OpenClaw", "openclaw", "--acp"},
+	{"kimi", "Kimi CLI", "kimi", "acp"},
+	{"opencode", "OpenCode", "opencode", "acp"},
+	{"openclaw", "OpenClaw", "openclaw", "acp"},
 	{"qwen", "Qwen Code", "qwen", "--acp"},
 }
 
