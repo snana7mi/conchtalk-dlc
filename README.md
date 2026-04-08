@@ -31,6 +31,10 @@ chmod +x conchtalk-dlc
 ./conchtalk-dlc --token <YOUR_TOKEN>
 ```
 
+## Acknowledgments
+
+Inspired by and referenced from [Komari Agent](https://github.com/komari-monitor/komari-agent).
+
 ## License
 
 Apache-2.0

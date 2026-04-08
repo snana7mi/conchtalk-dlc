@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/snana7mi/conchtalk-dlc/metrics"
 )
 
 // MessageHandler processes incoming messages from the relay server.
@@ -35,15 +36,19 @@ type Client struct {
 
 	// attempt tracks reconnection attempts for backoff; reset on successful connect.
 	attempt *int
+
+	// metricsCollector 采集 CPU/内存使用率，心跳时捎带发送。
+	metricsCollector *metrics.Collector
 }
 
 // NewClient creates a new relay client. Call Run() to start the connection loop.
 func NewClient(serverURL, token string, handler MessageHandler) *Client {
 	return &Client{
-		serverURL: serverURL,
-		token:     token,
-		handler:   handler,
-		done:      make(chan struct{}),
+		serverURL:        serverURL,
+		token:            token,
+		handler:          handler,
+		done:             make(chan struct{}),
+		metricsCollector: metrics.NewCollector(),
 	}
 }
 
@@ -209,8 +214,6 @@ func (c *Client) heartbeat(done chan struct{}) {
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
 
-	ping := []byte(`{"type":"ping"}`)
-
 	for {
 		select {
 		case <-done:
@@ -224,8 +227,14 @@ func (c *Client) heartbeat(done chan struct{}) {
 				if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
 					log.Printf("[relay] heartbeat error: %v", err)
 				}
-				// Application-level ping so the DO can update last_seen
-				_ = c.conn.WriteMessage(websocket.TextMessage, ping)
+				// Application-level ping with metrics so the DO can update last_seen
+				// and forward CPU/memory data to the iOS client
+				m := c.metricsCollector.Collect()
+				pingMsg, _ := json.Marshal(map[string]any{
+					"type":    "ping",
+					"metrics": m,
+				})
+				_ = c.conn.WriteMessage(websocket.TextMessage, pingMsg)
 			}
 			c.connMu.Unlock()
 		}
